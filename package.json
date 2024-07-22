@@ -10,7 +10,7 @@
     "start": "node upload.js"
   },
   "dependencies": {
-    "axios": "^0.21.1",
+    "axios": "^1.7.2",
     "form-data": "^4.0.0",
     "progress": "^2.0.3",
     "yargs": "^17.7.2"

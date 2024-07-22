@@ -55,16 +55,17 @@ const form = new FormData();
 const fileStream = fs.createReadStream(filePath);
 form.append(fileName, fileStream);
 
-const headers = form.getHeaders();
+const headers = {
+    ...form.getHeaders(),
+    'Content-Length': fs.statSync(filePath).size
+};
+
 if (argv.auth) {
     headers['Authorization'] = argv.auth;
 }
 
-const bar = new ProgressBar('Uploading [:bar] :percent :etas', { total: fs.statSync(filePath).size });
-
-fileStream.on('data', chunk => {
-    bar.tick(chunk.length);
-});
+const totalSize = fs.statSync(filePath).size;
+const bar = new ProgressBar('Uploading [:bar] :percent :etas', { total: totalSize });
 
 axios({
     method: method,
@@ -72,11 +73,16 @@ axios({
     headers: headers,
     data: form,
     maxContentLength: Infinity,
-    maxBodyLength: Infinity
+    maxBodyLength: Infinity,
+    onUploadProgress: (progressEvent) => {
+        if (progressEvent.lengthComputable) {
+            bar.tick(progressEvent.loaded - bar.curr);
+        }
+    }
 })
 .then(response => {
-    console.log('File uploaded successfully:', response.data);
+    console.log('\nFile uploaded successfully:', response.data);
 })
 .catch(error => {
-    console.error('Error uploading file:', error.message);
+    console.error('\nError uploading file:', error.message);
 });
